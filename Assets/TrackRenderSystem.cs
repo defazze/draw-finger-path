@@ -16,14 +16,13 @@ public class TrackRenderSystem : ComponentSystem
     {
         _step = GameManager.Instanse.step;
         _trackWidth = GameManager.Instanse.trackWidth;
-        var height = _step;
 
         _standartVertices = new Vector3[4]
        {
-            new Vector3(-_trackWidth/2, -height/2, 0),
-            new Vector3(_trackWidth/2, -height/2, 0),
-            new Vector3(-_trackWidth/2, height/2, 0),
-            new Vector3(_trackWidth/2, height/2, 0)
+            new Vector3(-_trackWidth/2, -_step/2, 0),
+            new Vector3(_trackWidth/2, -_step/2, 0),
+            new Vector3(-_trackWidth/2, _step/2, 0),
+            new Vector3(_trackWidth/2, _step/2, 0)
        };
 
         _standartMesh = QuadMesh.Create(_standartVertices);
@@ -42,49 +41,34 @@ public class TrackRenderSystem : ComponentSystem
             var moveVector = Vector3.ClampMagnitude(trackPoint.moveVector, _step / 2);
             var normal = Vector3.ClampMagnitude(trackPoint.normal, _trackWidth / 2);
 
+            int freeUpIndex = 3;
+            int freeDownIndex = 1;
+            int connectedUpIndex = 2;
+            int connectedDownIndex = 0;
+
+            if (!trackPoint.contrclockwise)
+            {
+
+                freeUpIndex = 2;
+                freeDownIndex = 0;
+                connectedUpIndex = 3;
+                connectedDownIndex = 1;
+            }
+
+            meshVertices[freeUpIndex] = moveVector + normal;
+            meshVertices[freeDownIndex] = moveVector - normal;
+
             if (em.Exists(trackPoint.previous))
             {
+                var previousPoint = em.GetComponentData<TrackMesh>(trackPoint.previous);
                 var previousLocate = em.GetComponentData<Translation>(trackPoint.previous).Value;
-                if (em.HasComponent<TrackMesh>(trackPoint.previous))
-                {
-                    var previousMesh = em.GetComponentData<TrackMesh>(trackPoint.previous);
-                    meshVertices[0] = previousMesh[1] + previousLocate - myLocate;
-                    meshVertices[2] = previousMesh[3] + previousLocate - myLocate;
-                }
-                else
-                {
-                    var points = GetMedianNormals(myLocate, previousLocate);
-                    meshVertices[0] = points[0];
-                    meshVertices[2] = points[1];
-                }
+                meshVertices[connectedUpIndex] = previousPoint[freeUpIndex] + previousLocate - myLocate;
+                meshVertices[connectedDownIndex] = previousPoint[freeDownIndex] + previousLocate - myLocate;
             }
             else
             {
-                meshVertices[0] = -1 * moveVector - normal;
-                meshVertices[2] = -1 * moveVector + normal;
-            }
-
-            if (em.Exists(trackPoint.next))
-            {
-                var nextLocate = em.GetComponentData<Translation>(trackPoint.next).Value;
-                if (em.HasComponent<TrackMesh>(trackPoint.next))
-                {
-                    var nextMesh = em.GetComponentData<TrackMesh>(trackPoint.next);
-                    meshVertices[1] = nextMesh[0] + nextLocate - myLocate;
-                    meshVertices[3] = nextMesh[2] + nextLocate - myLocate;
-                }
-                else
-                {
-                    var points = GetMedianNormals(myLocate, nextLocate);
-
-                    meshVertices[1] = points[1];
-                    meshVertices[3] = points[0];
-                }
-            }
-            else
-            {
-                meshVertices[1] = moveVector - normal;
-                meshVertices[3] = moveVector + normal;
+                meshVertices[connectedUpIndex] = normal - moveVector;
+                meshVertices[connectedDownIndex] = -1 * normal - moveVector;
             }
 
             mesh = QuadMesh.Create(meshVertices);
@@ -97,20 +81,5 @@ public class TrackRenderSystem : ComponentSystem
             em.AddComponentData(e, trackMesh);
 
         });
-    }
-
-    protected float3[] GetMedianNormals(float3 first, float3 second)
-    {
-        var vector = second - first;
-        var normal = new float3(-vector.y, vector.x, 0);
-        var normalized = Vector3.Normalize(normal);
-        normalized = Vector3.ClampMagnitude(normalized, _trackWidth / 2);
-
-        var halfVector = (float3)Vector3.Lerp(Vector3.zero, vector, .5f);
-
-        normal = halfVector + (float3)normalized;
-        var antinormal = halfVector - (float3)normalized;
-
-        return new[] { (float3)normal, antinormal };
     }
 }

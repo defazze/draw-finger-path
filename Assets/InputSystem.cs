@@ -13,7 +13,7 @@ public class InputSystem : ComponentSystem
     private bool _contrclockwise = true;
     private EntityManager _em;
     private EntityArchetype _archetype;
-    private Entity _currentEntity;
+    private Entity _previousEntity;
 
     protected override void OnCreate()
     {
@@ -34,7 +34,7 @@ public class InputSystem : ComponentSystem
         if (Input.GetMouseButtonDown(0))
         {
             _currentTrack = new List<Vector3>();
-            _currentEntity = Entity.Null;
+            _previousEntity = Entity.Null;
         }
 
         if (Input.GetMouseButton(0))
@@ -99,15 +99,8 @@ public class InputSystem : ComponentSystem
         var e = _em.CreateEntity(_archetype);
         _em.SetComponentData(e, new Translation { Value = point });
         _em.SetComponentData(e, new Rotation { Value = Quaternion.identity });
-        _em.SetComponentData(e, new TrackPoint { normal = normal, moveVector = moveVector, previous = _currentEntity });
+        _em.SetComponentData(e, new TrackPoint { normal = normal, moveVector = moveVector, previous = _previousEntity, contrclockwise = _contrclockwise });
 
-        if (_em.Exists(_currentEntity))
-        {
-            var previosPoint = _em.GetComponentData<TrackPoint>(_currentEntity);
-            previosPoint.next = e;
-            _em.SetComponentData(_currentEntity, previosPoint);
-        }
-
-        _currentEntity = e;
+        _previousEntity = e;
     }
 }

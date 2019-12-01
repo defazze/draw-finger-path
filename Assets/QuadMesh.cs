@@ -1,7 +1,10 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public static class QuadMesh
 {
+    private static List<Mesh> _cache = new List<Mesh>();
+
     public static Mesh Create()
     {
         var vertices = new Vector3[4]
