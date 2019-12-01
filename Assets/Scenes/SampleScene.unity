@@ -233,7 +233,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 875239d17b0d87632a7765b34403e0e6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _minDistance: 0.1
+  step: 0.4
   trackWidth: 0.4
   material: {fileID: 2100000, guid: db999c6f239aabc648a06c0d0e9354f4, type: 2}
 --- !u!4 &534421666

@@ -7,29 +7,34 @@ using UnityEngine;
 
 public class InputSystem : ComponentSystem
 {
-    private float _minDistance;
-    private float trackWidth;
+    private float _step;
+    private float _trackWidth;
     private List<Vector3> _currentTrack;
+    private bool _contrclockwise = true;
     private EntityManager _em;
     private EntityArchetype _archetype;
+    private Entity _currentEntity;
 
     protected override void OnCreate()
     {
-        _em = World.DefaultGameObjectInjectionWorld.EntityManager;
+        _step = GameManager.Instanse.step;
+        _trackWidth = GameManager.Instanse.trackWidth;
+
+        _em = EntityManager;
         _archetype = _em.CreateArchetype(
             typeof(LocalToWorld),
             typeof(Translation),
             typeof(Rotation),
             typeof(TrackPoint));
-
-        _minDistance = GameManager.Instanse._minDistance;
-        trackWidth = GameManager.Instanse.trackWidth;
     }
+
     protected override void OnUpdate()
     {
+
         if (Input.GetMouseButtonDown(0))
         {
             _currentTrack = new List<Vector3>();
+            _currentEntity = Entity.Null;
         }
 
         if (Input.GetMouseButton(0))
@@ -42,14 +47,14 @@ public class InputSystem : ComponentSystem
                 var currentPoint = lastPoint;
                 var distance = Vector3.Distance(currentPoint, point);
 
-                while (distance > _minDistance)
+                while (distance > _step)
                 {
-                    var percent = _minDistance / distance;
+                    var percent = _step / distance;
                     currentPoint = Vector3.Lerp(currentPoint, point, percent);
                     distance = Vector3.Distance(currentPoint, point);
                     AddPoint(currentPoint);
                 }
-                if (Vector3.Distance(lastPoint, point) >= _minDistance)
+                if (Vector3.Distance(lastPoint, point) >= _step)
                 {
                     AddPoint(point);
                 }
@@ -64,44 +69,45 @@ public class InputSystem : ComponentSystem
 
     private void AddPoint(Vector3 point)
     {
+        _currentTrack.Add(point);
+
+        if (_currentTrack.Count > 1)
+        {
+            var previous = _currentTrack[_currentTrack.Count - 2];
+
+            if (_currentTrack.Count == 2)
+            {
+                _contrclockwise = _currentTrack[0].x <= _currentTrack[1].x;
+            }
+
+            var moveVector = point - previous;
+            var normal = _contrclockwise ? new Vector3(-1 * moveVector.y, moveVector.x, 0) : new Vector3(moveVector.y, -1 * moveVector.x, 0);
+            normal.Normalize();
+            moveVector.Normalize();
+
+            if (_currentTrack.Count == 2)
+            {
+                CreateEntity(previous, normal, moveVector);
+            }
+
+            CreateEntity(point, normal, moveVector);
+        }
+    }
+
+    private void CreateEntity(float3 point, float3 normal, float3 moveVector)
+    {
         var e = _em.CreateEntity(_archetype);
         _em.SetComponentData(e, new Translation { Value = point });
         _em.SetComponentData(e, new Rotation { Value = Quaternion.identity });
+        _em.SetComponentData(e, new TrackPoint { normal = normal, moveVector = moveVector, previous = _currentEntity });
 
-        if (HasSingleton<LastPoint>())
+        if (_em.Exists(_currentEntity))
         {
-            Entities.WithAll<LastPoint>().ForEach((Entity last, ref TrackPoint lastPointQuad, ref Translation lastPointLocation) =>
-            {
-
-                float3[] vertices = new[] {
-                lastPointQuad.vertice0,
-                lastPointQuad.vertice1,
-                lastPointQuad.vertice2,
-                lastPointQuad.vertice3   };
-
-                var ordered = vertices
-                .Select(v => new { vertice = v, distance = Vector3.Distance(point, v) })
-                .OrderBy(v => v.distance).ToArray();
-
-                var edgePoint = Vector3.MoveTowards(lastPointLocation.Value, point, Vector3.Distance(lastPointLocation.Value, point) + _minDistance / 2);
-                //Vector2 p=
-                
-                _em.RemoveComponent<LastPoint>(last);
-            });
-
-        }
-        else
-        {
-            _em.SetComponentData(e, new TrackPoint
-            {
-                vertice0 = (float3)point + new float3(-_minDistance / 2, -trackWidth / 2, 0),
-                vertice1 = (float3)point + new float3(_minDistance / 2, -trackWidth / 2, 0),
-                vertice2 = (float3)point + new float3(-_minDistance / 2, trackWidth / 2, 0),
-                vertice3 = (float3)point + new float3(_minDistance / 2, trackWidth / 2, 0)
-            });
+            var previosPoint = _em.GetComponentData<TrackPoint>(_currentEntity);
+            previosPoint.next = e;
+            _em.SetComponentData(_currentEntity, previosPoint);
         }
 
-
-        _currentTrack.Add(point);
+        _currentEntity = e;
     }
 }
