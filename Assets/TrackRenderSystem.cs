@@ -79,13 +79,14 @@ public class TrackRenderSystem : ComponentSystem
 
                 var combines = new CombineInstance[2];
                 combines[0].mesh = mainMesh;
-                combines[0].transform = em.GetComponentData<LocalToWorld>(trackEntity).Value;
+                combines[0].transform = Matrix4x4.TRS(mainLocate, Quaternion.identity, new Vector3(1, 1, 1));
                 combines[1].mesh = mesh;
-                combines[1].transform = em.GetComponentData<LocalToWorld>(e).Value;
+                combines[1].transform = Matrix4x4.TRS(myLocate, Quaternion.identity, new Vector3(1, 1, 1));
 
                 var newMesh = new Mesh();
                 newMesh.CombineMeshes(combines, true, true);
 
+                em.SetComponentData(trackEntity, new Translation { Value = Vector3.zero });
                 em.SetSharedComponentData(trackEntity, new RenderMesh { mesh = newMesh, material = GameManager.Instanse.material });
             }
             else
