@@ -26,7 +26,7 @@ public class TrackRenderSystem : ComponentSystem
             new Vector3(_trackWidth/2, _step/2, 0)
        };
 
-        QuadMesh.EnableCache();
+
         _standartMesh = QuadMesh.Create(_standartVertices);
         _standartRender = new RenderMesh { mesh = _standartMesh, material = GameManager.Instanse.material };
     }
