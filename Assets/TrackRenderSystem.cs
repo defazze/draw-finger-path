@@ -12,6 +12,7 @@ public class TrackRenderSystem : ComponentSystem
     private float _step;
     private float _trackWidth;
     private Vector3[] _standartVertices;
+    private RenderMesh _standartRender;
     protected override void OnCreate()
     {
         _step = GameManager.Instanse.step;
@@ -25,14 +26,17 @@ public class TrackRenderSystem : ComponentSystem
             new Vector3(_trackWidth/2, _step/2, 0)
        };
 
+        QuadMesh.EnableCache();
         _standartMesh = QuadMesh.Create(_standartVertices);
+        _standartRender = new RenderMesh { mesh = _standartMesh, material = GameManager.Instanse.material };
     }
 
     protected override void OnUpdate()
     {
-        var em = EntityManager;
-        Entities.WithNone<TrackMesh>().ForEach((Entity e, ref Translation translation, ref TrackPoint trackPoint) =>
+
+        Entities.ForEach((Entity e, ref Translation translation, ref TrackPoint trackPoint) =>
         {
+            var em = EntityManager;
             var myLocate = translation.Value;
             var mesh = new Mesh();
             var vertices = new List<float3>(4);
@@ -46,7 +50,10 @@ public class TrackRenderSystem : ComponentSystem
             int connectedUpIndex = 2;
             int connectedDownIndex = 0;
 
-            if (!trackPoint.contrclockwise)
+            var trackEntity = trackPoint.track;
+            var track = em.GetComponentData<Track>(trackEntity);
+            var contrclockwise = track.contrclockwise;
+            if (!contrclockwise)
             {
 
                 freeUpIndex = 2;
@@ -57,29 +64,58 @@ public class TrackRenderSystem : ComponentSystem
 
             meshVertices[freeUpIndex] = moveVector + normal;
             meshVertices[freeDownIndex] = moveVector - normal;
+            var tempConnectedUp = normal - moveVector;
+            var tempConnectedDown = -1 * normal - moveVector;
 
-            if (em.Exists(trackPoint.previous))
+            if (em.HasComponent<RenderMesh>(trackEntity))
             {
-                var previousPoint = em.GetComponentData<TrackMesh>(trackPoint.previous);
-                var previousLocate = em.GetComponentData<Translation>(trackPoint.previous).Value;
-                meshVertices[connectedUpIndex] = previousPoint[freeUpIndex] + previousLocate - myLocate;
-                meshVertices[connectedDownIndex] = previousPoint[freeDownIndex] + previousLocate - myLocate;
+                var mainMesh = em.GetSharedComponentData<RenderMesh>(trackEntity).mesh;
+                var mainLocate = em.GetComponentData<Translation>(trackEntity).Value;
+
+                meshVertices[connectedUpIndex] = GetClosestVertice(tempConnectedUp + (Vector3)myLocate, mainMesh.vertices, mainLocate) - (Vector3)myLocate;
+                meshVertices[connectedDownIndex] = GetClosestVertice(tempConnectedDown + (Vector3)myLocate, mainMesh.vertices, mainLocate) - (Vector3)myLocate;
+
+                mesh = QuadMesh.Create(meshVertices);
+
+                var combines = new CombineInstance[2];
+                combines[0].mesh = mainMesh;
+                combines[0].transform = em.GetComponentData<LocalToWorld>(trackEntity).Value;
+                combines[1].mesh = mesh;
+                combines[1].transform = em.GetComponentData<LocalToWorld>(e).Value;
+
+                var newMesh = new Mesh();
+                newMesh.CombineMeshes(combines, true, true);
+
+                em.SetSharedComponentData(trackEntity, new RenderMesh { mesh = newMesh, material = GameManager.Instanse.material });
             }
             else
             {
-                meshVertices[connectedUpIndex] = normal - moveVector;
-                meshVertices[connectedDownIndex] = -1 * normal - moveVector;
+                meshVertices[connectedUpIndex] = tempConnectedUp;
+                meshVertices[connectedDownIndex] = tempConnectedDown;
+
+                em.AddSharedComponentData(trackEntity, new RenderMesh { mesh = QuadMesh.Create(meshVertices), material = GameManager.Instanse.material });
             }
 
-            mesh = QuadMesh.Create(meshVertices);
-
-            var trackMesh = new TrackMesh();
-            trackMesh.AddRange(meshVertices.Select(v => (float3)v));
-
-            RenderMesh render = new RenderMesh { mesh = mesh, material = GameManager.Instanse.material };
-            em.AddSharedComponentData(e, render);
-            em.AddComponentData(e, trackMesh);
-
+            PostUpdateCommands.DestroyEntity(e);
         });
+    }
+
+    private Vector3 GetClosestVertice(Vector3 source, Vector3[] vertices, Vector3 transform)
+    {
+        var closest = vertices[0] + transform;
+        var minDistanse = Vector3.Distance(source, closest);
+
+        foreach (var vertice in vertices)
+        {
+            var worldVertice = vertice + transform;
+            var distance = Vector3.Distance(source, worldVertice);
+            if (distance < minDistanse)
+            {
+                minDistanse = distance;
+                closest = worldVertice;
+            }
+        }
+
+        return closest;
     }
 }

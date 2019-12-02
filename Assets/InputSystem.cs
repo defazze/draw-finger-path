@@ -12,8 +12,9 @@ public class InputSystem : ComponentSystem
     private List<Vector3> _currentTrack;
     private bool _contrclockwise = true;
     private EntityManager _em;
-    private EntityArchetype _archetype;
-    private Entity _previousEntity;
+    private EntityArchetype _pointArchetype;
+    private EntityArchetype _trackArchetype;
+    private Entity _currentTrackEntity;
 
     protected override void OnCreate()
     {
@@ -21,11 +22,17 @@ public class InputSystem : ComponentSystem
         _trackWidth = GameManager.Instanse.trackWidth;
 
         _em = EntityManager;
-        _archetype = _em.CreateArchetype(
+        _pointArchetype = _em.CreateArchetype(
             typeof(LocalToWorld),
             typeof(Translation),
             typeof(Rotation),
             typeof(TrackPoint));
+
+        _trackArchetype = _em.CreateArchetype(
+            typeof(LocalToWorld),
+            typeof(Translation),
+            typeof(Rotation),
+            typeof(Track));
     }
 
     protected override void OnUpdate()
@@ -33,8 +40,13 @@ public class InputSystem : ComponentSystem
 
         if (Input.GetMouseButtonDown(0))
         {
+            var point = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            point = new Vector3 { x = point.x, y = point.y, z = 0 };
+
             _currentTrack = new List<Vector3>();
-            _previousEntity = Entity.Null;
+            _currentTrackEntity = _em.CreateEntity(_trackArchetype);
+            _em.SetComponentData<Translation>(_currentTrackEntity, new Translation { Value = point });
+            _em.SetComponentData<Rotation>(_currentTrackEntity, new Rotation { Value = Quaternion.identity });
         }
 
         if (Input.GetMouseButton(0))
@@ -54,6 +66,7 @@ public class InputSystem : ComponentSystem
                     distance = Vector3.Distance(currentPoint, point);
                     AddPoint(currentPoint);
                 }
+
                 if (Vector3.Distance(lastPoint, point) >= _step)
                 {
                     AddPoint(point);
@@ -78,6 +91,7 @@ public class InputSystem : ComponentSystem
             if (_currentTrack.Count == 2)
             {
                 _contrclockwise = _currentTrack[0].x <= _currentTrack[1].x;
+                _em.SetComponentData(_currentTrackEntity, new Track { contrclockwise = _contrclockwise });
             }
 
             var moveVector = point - previous;
@@ -87,20 +101,23 @@ public class InputSystem : ComponentSystem
 
             if (_currentTrack.Count == 2)
             {
-                CreateEntity(previous, normal, moveVector);
+                CreatePointEntity(previous, normal, moveVector);
             }
 
-            CreateEntity(point, normal, moveVector);
+            CreatePointEntity(point, normal, moveVector);
         }
     }
 
-    private void CreateEntity(float3 point, float3 normal, float3 moveVector)
+    private void CreatePointEntity(float3 point, float3 normal, float3 moveVector)
     {
-        var e = _em.CreateEntity(_archetype);
+        var e = _em.CreateEntity(_pointArchetype);
         _em.SetComponentData(e, new Translation { Value = point });
         _em.SetComponentData(e, new Rotation { Value = Quaternion.identity });
-        _em.SetComponentData(e, new TrackPoint { normal = normal, moveVector = moveVector, previous = _previousEntity, contrclockwise = _contrclockwise });
-
-        _previousEntity = e;
+        _em.SetComponentData(e, new TrackPoint
+        {
+            normal = normal,
+            moveVector = moveVector,
+            track = _currentTrackEntity
+        });
     }
 }

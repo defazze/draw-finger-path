@@ -8,8 +8,7 @@ public struct TrackPoint : IComponentData
 {
     public float3 normal;
     public float3 moveVector;
-    public Entity previous;
-    public bool contrclockwise;
+    public Entity track;
 }
 
 public struct TrackMesh : IComponentData
