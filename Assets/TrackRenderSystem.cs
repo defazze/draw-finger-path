@@ -67,21 +67,28 @@ public class TrackRenderSystem : ComponentSystem
             var tempConnectedUp = normal - moveVector;
             var tempConnectedDown = -1 * normal - moveVector;
 
+            var mainLocate = em.GetComponentData<Translation>(trackEntity).Value;
+
+
+
             if (em.HasComponent<RenderMesh>(trackEntity))
             {
                 var mainMesh = em.GetSharedComponentData<RenderMesh>(trackEntity).mesh;
-                var mainLocate = em.GetComponentData<Translation>(trackEntity).Value;
 
-                meshVertices[connectedUpIndex] = GetClosestVertice(tempConnectedUp + (Vector3)myLocate, mainMesh.vertices, mainLocate) - (Vector3)myLocate;
-                meshVertices[connectedDownIndex] = GetClosestVertice(tempConnectedDown + (Vector3)myLocate, mainMesh.vertices, mainLocate) - (Vector3)myLocate;
+                meshVertices[connectedUpIndex] = track.connectUp - myLocate;
+                meshVertices[connectedDownIndex] = track.connectDown - myLocate;
+
+                track.connectUp = (float3)meshVertices[freeUpIndex] + myLocate;
+                track.connectDown = (float3)meshVertices[freeDownIndex] + myLocate;
+                em.SetComponentData(trackEntity, track);
 
                 mesh = QuadMesh.Create(meshVertices);
 
                 var combines = new CombineInstance[2];
                 combines[0].mesh = mainMesh;
-                combines[0].transform = Matrix4x4.TRS(mainLocate, Quaternion.identity, new Vector3(1, 1, 1));
+                combines[0].transform = Matrix4x4.TRS(mainLocate, Quaternion.identity, Vector3.one);
                 combines[1].mesh = mesh;
-                combines[1].transform = Matrix4x4.TRS(myLocate, Quaternion.identity, new Vector3(1, 1, 1));
+                combines[1].transform = Matrix4x4.TRS(myLocate, Quaternion.identity, Vector3.one);
 
                 var newMesh = new Mesh();
                 newMesh.CombineMeshes(combines, true, true);
@@ -97,33 +104,19 @@ public class TrackRenderSystem : ComponentSystem
                 mesh = QuadMesh.Create(meshVertices);
                 em.AddSharedComponentData(trackEntity, new RenderMesh { mesh = mesh, material = GameManager.Instanse.material });
 
-                var trackQuadEntity = em.CreateEntity();
-                var trackQuad = new TrackQuad();
-                trackQuad.Set(mesh.vertices, myLocate);
-                trackQuad.track = trackEntity;
-                PostUpdateCommands.AddComponent(trackQuadEntity, trackQuad);
+                track.connectUp = (float3)meshVertices[freeUpIndex] + myLocate;
+                track.connectDown = (float3)meshVertices[freeDownIndex] + myLocate;
+                em.SetComponentData(trackEntity, track);
+
+                /*
+                                var trackQuadEntity = em.CreateEntity();
+                                var trackQuad = new TrackQuad();
+                                trackQuad.Set(mesh.vertices, myLocate);
+                                trackQuad.track = trackEntity;
+                                PostUpdateCommands.AddComponent(trackQuadEntity, trackQuad);*/
             }
 
             PostUpdateCommands.DestroyEntity(e);
         });
-    }
-
-    private Vector3 GetClosestVertice(Vector3 source, Vector3[] vertices, Vector3 transform)
-    {
-        var closest = vertices[0] + transform;
-        var minDistanse = Vector3.Distance(source, closest);
-
-        foreach (var vertice in vertices)
-        {
-            var worldVertice = vertice + transform;
-            var distance = Vector3.Distance(source, worldVertice);
-            if (distance < minDistanse)
-            {
-                minDistanse = distance;
-                closest = worldVertice;
-            }
-        }
-
-        return closest;
     }
 }

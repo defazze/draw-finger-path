@@ -1,3 +1,5 @@
+using System;
+using System.Linq;
 using Unity.Entities;
 using Unity.Rendering;
 using UnityEngine;
@@ -16,7 +18,7 @@ public class MeshRaycastSystem : ComponentSystem
                 Entities.WithAll<Track>().ForEach((Entity e, RenderMesh render) =>
                 {
                     var mesh = render.mesh;
-                    var inside = Poly.IsInPolygon(mesh.vertices, point);
+                    var inside = Poly.ContainsPoint(mesh.vertices, point);
 
                     if (inside)
                     {
@@ -30,27 +32,28 @@ public class MeshRaycastSystem : ComponentSystem
 
 public static class Poly
 {
-    public static bool ContainsPoint(Vector3[] polyPoints, Vector3 p)
+    public static bool ContainsPoint(Vector3[] vertices, Vector3 p)
     {
-        var j = polyPoints.Length - 1;
-        var inside = false;
-        for (int i = 0; i < polyPoints.Length; j = i++)
+        for (int i = 0; i < vertices.Length; i += 4)
         {
-            var pi = polyPoints[i];
-            var pj = polyPoints[j];
-            if (((pi.y <= p.y && p.y < pj.y) || (pj.y <= p.y && p.y < pi.y)) &&
-                (p.x < (pj.x - pi.x) * (p.y - pi.y) / (pj.y - pi.y) + pi.x))
-                inside = !inside;
+            var quad = new[] { vertices[i], vertices[i + 1], vertices[i + 2], vertices[i + 3] };
+            if (IsInPolygon(quad, p))
+            {
+                return true;
+            }
         }
-        return inside;
+
+        return false;
     }
 
-    public static bool IsInPolygon(Vector3[] vertices, Vector3 p)
+    private static bool IsInPolygon(Vector3[] vertices, Vector3 p)
     {
-        if (vertices.Length < 3) return false;
+        var length = vertices.Length;
+        var ordered = new[] { vertices[1], vertices[0], vertices[2], vertices[3] };
+
         bool isInPolygon = false;
-        var lastVertex = vertices[vertices.Length - 1];
-        foreach (var vertex in vertices)
+        var lastVertex = ordered[length - 1];
+        foreach (var vertex in ordered)
         {
             if (p.y.IsBetween(lastVertex.y, vertex.y))
             {

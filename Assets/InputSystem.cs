@@ -65,7 +65,11 @@ public class InputSystem : ComponentSystem
                         var percent = _step / distance;
                         currentPoint = Vector3.Lerp(currentPoint, point, percent);
                         distance = Vector3.Distance(currentPoint, point);
-                        AddPoint(currentPoint);
+
+                        if (distance >= _step)
+                        {
+                            AddPoint(currentPoint);
+                        };
                     }
 
                     if (Vector3.Distance(lastPoint, point) >= _step)
