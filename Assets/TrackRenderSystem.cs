@@ -94,7 +94,14 @@ public class TrackRenderSystem : ComponentSystem
                 meshVertices[connectedUpIndex] = tempConnectedUp;
                 meshVertices[connectedDownIndex] = tempConnectedDown;
 
-                em.AddSharedComponentData(trackEntity, new RenderMesh { mesh = QuadMesh.Create(meshVertices), material = GameManager.Instanse.material });
+                mesh = QuadMesh.Create(meshVertices);
+                em.AddSharedComponentData(trackEntity, new RenderMesh { mesh = mesh, material = GameManager.Instanse.material });
+
+                var trackQuadEntity = em.CreateEntity();
+                var trackQuad = new TrackQuad();
+                trackQuad.Set(mesh.vertices, myLocate);
+                trackQuad.track = trackEntity;
+                PostUpdateCommands.AddComponent(trackQuadEntity, trackQuad);
             }
 
             PostUpdateCommands.DestroyEntity(e);

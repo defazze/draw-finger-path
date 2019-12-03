@@ -37,46 +37,48 @@ public class InputSystem : ComponentSystem
 
     protected override void OnUpdate()
     {
-
-        if (Input.GetMouseButtonDown(0))
+        if (!GameManager.Instanse.eraseMode)
         {
-            var point = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            point = new Vector3 { x = point.x, y = point.y, z = 0 };
-
-            _currentTrack = new List<Vector3>();
-            _currentTrackEntity = _em.CreateEntity(_trackArchetype);
-            _em.SetComponentData<Translation>(_currentTrackEntity, new Translation { Value = point });
-            _em.SetComponentData<Rotation>(_currentTrackEntity, new Rotation { Value = Quaternion.identity });
-        }
-
-        if (Input.GetMouseButton(0))
-        {
-            var point = Camera.main.ScreenToWorldPoint(Input.mousePosition) + new Vector3(0, 0, 10);
-
-            if (_currentTrack.Count > 0)
+            if (Input.GetMouseButtonDown(0))
             {
-                var lastPoint = _currentTrack[_currentTrack.Count - 1];
-                var currentPoint = lastPoint;
-                var distance = Vector3.Distance(currentPoint, point);
+                var point = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+                point = new Vector3 { x = point.x, y = point.y, z = 0 };
 
-                while (distance > _step)
+                _currentTrack = new List<Vector3>();
+                _currentTrackEntity = _em.CreateEntity(_trackArchetype);
+                _em.SetComponentData<Translation>(_currentTrackEntity, new Translation { Value = point });
+                _em.SetComponentData<Rotation>(_currentTrackEntity, new Rotation { Value = Quaternion.identity });
+            }
+
+            if (Input.GetMouseButton(0))
+            {
+                var point = Camera.main.ScreenToWorldPoint(Input.mousePosition) + new Vector3(0, 0, 10);
+
+                if (_currentTrack.Count > 0)
                 {
-                    var percent = _step / distance;
-                    currentPoint = Vector3.Lerp(currentPoint, point, percent);
-                    distance = Vector3.Distance(currentPoint, point);
-                    AddPoint(currentPoint);
-                }
+                    var lastPoint = _currentTrack[_currentTrack.Count - 1];
+                    var currentPoint = lastPoint;
+                    var distance = Vector3.Distance(currentPoint, point);
 
-                if (Vector3.Distance(lastPoint, point) >= _step)
+                    while (distance > _step)
+                    {
+                        var percent = _step / distance;
+                        currentPoint = Vector3.Lerp(currentPoint, point, percent);
+                        distance = Vector3.Distance(currentPoint, point);
+                        AddPoint(currentPoint);
+                    }
+
+                    if (Vector3.Distance(lastPoint, point) >= _step)
+                    {
+                        AddPoint(point);
+                    }
+                }
+                else
                 {
                     AddPoint(point);
                 }
-            }
-            else
-            {
-                AddPoint(point);
-            }
 
+            }
         }
     }
 
