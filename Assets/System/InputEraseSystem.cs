@@ -8,7 +8,6 @@ using UnityEngine;
 public class InputEraseSystem : ComponentSystem
 {
     private float _step;
-    private float _trackWidth;
     private List<Vector3> _currentTrack;
     private EntityManager _em;
     private EntityArchetype _pointArchetype;
@@ -17,7 +16,6 @@ public class InputEraseSystem : ComponentSystem
     protected override void OnCreate()
     {
         _step = GameManager.Instanse.eraseStep;
-        _trackWidth = GameManager.Instanse.trackWidth;
 
         _em = EntityManager;
         _pointArchetype = _em.CreateArchetype(
@@ -26,7 +24,7 @@ public class InputEraseSystem : ComponentSystem
             typeof(Rotation),
             typeof(ErasePoint));
 
-        
+
     }
 
     protected override void OnUpdate()
@@ -46,34 +44,7 @@ public class InputEraseSystem : ComponentSystem
             {
                 var point = Camera.main.ScreenToWorldPoint(Input.mousePosition) + new Vector3(0, 0, 10);
 
-                if (_currentTrack.Count > 0)
-                {
-                    var lastPoint = _currentTrack[_currentTrack.Count - 1];
-                    var currentPoint = lastPoint;
-                    var distance = Vector3.Distance(currentPoint, point);
-
-                    while (distance > _step)
-                    {
-                        var percent = _step / distance;
-                        currentPoint = Vector3.Lerp(currentPoint, point, percent);
-                        distance = Vector3.Distance(currentPoint, point);
-
-                        if (distance >= _step)
-                        {
-                            AddPoint(currentPoint);
-                        };
-                    }
-
-                    if (Vector3.Distance(lastPoint, point) >= _step)
-                    {
-                        AddPoint(point);
-                    }
-                }
-                else
-                {
-                    AddPoint(point);
-                }
-
+                _currentTrack.Interpolate(point, _step, AddPoint);
             }
         }
     }

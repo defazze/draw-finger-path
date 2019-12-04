@@ -90,35 +90,41 @@ public class GameManager : MonoBehaviour
 
     public void OnClick()
     {
+        /*
         Cut(_correctE, new[] { 4, 5, 6, 7 });
         Cut(_incorrectE, new[] { 4, 5, 6, 7 });
+        */
+
     }
 
-    private void Cut(Entity e, int[] verticeIndexes)
-    {
-        var minVerticeIndex = verticeIndexes.Min();
-        var maxVerticeIndex = verticeIndexes.Max() + 1;
 
-        var mesh = _em.GetSharedComponentData<RenderMesh>(e).mesh;
+}
 
-        var leftMesh = new Mesh();
-        leftMesh.vertices = mesh.vertices.Take(minVerticeIndex).ToArray();
-        leftMesh.triangles = mesh.triangles.Take(minVerticeIndex / 2 * 3).ToArray();
-        leftMesh.normals = mesh.normals.Take(minVerticeIndex).ToArray();
-        leftMesh.uv = mesh.uv.Take(minVerticeIndex).ToArray();
+private void Cut(Entity e, int[] verticeIndexes)
+{
+    var minVerticeIndex = verticeIndexes.Min();
+    var maxVerticeIndex = verticeIndexes.Max() + 1;
 
-        var rightMesh = new Mesh();
-        rightMesh.vertices = mesh.vertices.Skip(maxVerticeIndex).ToArray();
-        rightMesh.triangles = mesh.triangles.Skip(maxVerticeIndex / 2 * 3).Select(t => t - maxVerticeIndex).ToArray();
-        rightMesh.normals = mesh.normals.Skip(maxVerticeIndex).ToArray();
-        rightMesh.uv = mesh.uv.Skip(maxVerticeIndex).ToArray();
+    var mesh = _em.GetSharedComponentData<RenderMesh>(e).mesh;
 
-        _em.DestroyEntity(e);
+    var leftMesh = new Mesh();
+    leftMesh.vertices = mesh.vertices.Take(minVerticeIndex).ToArray();
+    leftMesh.triangles = mesh.triangles.Take(minVerticeIndex / 2 * 3).ToArray();
+    leftMesh.normals = mesh.normals.Take(minVerticeIndex).ToArray();
+    leftMesh.uv = mesh.uv.Take(minVerticeIndex).ToArray();
 
-        var leftE = _em.CreateEntity(_archetype);
-        var rightE = _em.CreateEntity(_archetype);
+    var rightMesh = new Mesh();
+    rightMesh.vertices = mesh.vertices.Skip(maxVerticeIndex).ToArray();
+    rightMesh.triangles = mesh.triangles.Skip(maxVerticeIndex / 2 * 3).Select(t => t - maxVerticeIndex).ToArray();
+    rightMesh.normals = mesh.normals.Skip(maxVerticeIndex).ToArray();
+    rightMesh.uv = mesh.uv.Skip(maxVerticeIndex).ToArray();
 
-        _em.SetSharedComponentData(leftE, new RenderMesh { mesh = leftMesh, material = material });
-        _em.SetSharedComponentData(rightE, new RenderMesh { mesh = rightMesh, material = material });
-    }
+    _em.DestroyEntity(e);
+
+    var leftE = _em.CreateEntity(_archetype);
+    var rightE = _em.CreateEntity(_archetype);
+
+    _em.SetSharedComponentData(leftE, new RenderMesh { mesh = leftMesh, material = material });
+    _em.SetSharedComponentData(rightE, new RenderMesh { mesh = rightMesh, material = material });
+}
 }
