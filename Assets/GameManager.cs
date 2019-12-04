@@ -20,8 +20,11 @@ public class GameManager : MonoBehaviour
 
     public static GameManager Instanse { get; private set; }
 
-    private Mesh _newMesh;
-    private Entity _e;
+    private Mesh _correctMesh;
+    private Mesh _incorrectMesh;
+
+    private Entity _correctE;
+    private Entity _incorrectE;
     private EntityManager _em;
     private EntityArchetype _archetype;
     public GameManager()
@@ -38,8 +41,10 @@ public class GameManager : MonoBehaviour
             typeof(Rotation),
             typeof(RenderMesh));
 
-        _e = _em.CreateEntity(_archetype);
 
+
+        //correct mesh
+        _correctE = _em.CreateEntity(_archetype);
         var mesh = QuadMesh.Create();
         var combines = new CombineInstance[3];
 
@@ -51,41 +56,61 @@ public class GameManager : MonoBehaviour
         combines[1].transform = Matrix4x4.TRS(new Vector3(1, 0, 0), Quaternion.identity, Vector3.one);
         combines[2].transform = Matrix4x4.TRS(new Vector3(2, 0, 0), Quaternion.identity, Vector3.one);
 
-        _newMesh = new Mesh();
-        _newMesh.CombineMeshes(combines, true, true);
-        _newMesh.Optimize();
+        _correctMesh = new Mesh();
+        _correctMesh.CombineMeshes(combines, true, true);
 
-        _em.SetSharedComponentData(_e, new RenderMesh { mesh = _newMesh, material = material });
+        _em.SetSharedComponentData(_correctE, new RenderMesh { mesh = _correctMesh, material = material });
+
+        //incorrect mesh
+        _incorrectE = _em.CreateEntity(_archetype);
+        mesh = QuadMesh.Create();
+        combines = new CombineInstance[3];
+
+        combines[0].mesh = mesh;
+        combines[1].mesh = mesh;
+        combines[2].mesh = mesh;
+
+        combines[0].transform = Matrix4x4.TRS(new Vector3(2, 1, 0), Quaternion.identity, Vector3.one);
+        combines[1].transform = Matrix4x4.TRS(new Vector3(1, 1, 0), Quaternion.identity, Vector3.one);
+        combines[2].transform = Matrix4x4.TRS(new Vector3(0, 1, 0), Quaternion.identity, Vector3.one);
+
+        _incorrectMesh = new Mesh();
+        _incorrectMesh.CombineMeshes(combines, true, true);
+
+        _em.SetSharedComponentData(_incorrectE, new RenderMesh { mesh = _incorrectMesh, material = material });
     }
 
     public void OnEraseToggled(bool val)
     {
         eraseMode = val;
     }
-    
+
     public void OnClick()
     {
-        var minTriangle = 2;
-        var maxTriangle = minTriangle + 1;
-        var minTriangleIndex = minTriangle * 3;
-        var maxTriangleIndex = (maxTriangle + 1) * 3 - 2;
+        Cut(_correctE, new[] { 4, 5, 6, 7 });
+        Cut(_incorrectE, new[] { 4, 5, 6, 7 });
+    }
 
-        var minVerticeIndex = _newMesh.triangles[minTriangleIndex];
-        var maxVerticeIndex = _newMesh.triangles[maxTriangleIndex];
+    private void Cut(Entity e, int[] verticeIndexes)
+    {
+        var minVerticeIndex = verticeIndexes.Min();
+        var maxVerticeIndex = verticeIndexes.Max() + 1;
+
+        var mesh = _em.GetSharedComponentData<RenderMesh>(e).mesh;
 
         var leftMesh = new Mesh();
-        leftMesh.vertices = _newMesh.vertices.Take(minVerticeIndex).ToArray();
-        leftMesh.triangles = _newMesh.triangles.Take(minTriangleIndex).ToArray();
-        leftMesh.normals = _newMesh.normals.Take(minVerticeIndex).ToArray();
-        leftMesh.uv = _newMesh.uv.Take(minVerticeIndex).ToArray();
+        leftMesh.vertices = mesh.vertices.Take(minVerticeIndex).ToArray();
+        leftMesh.triangles = mesh.triangles.Take(minVerticeIndex / 2 * 3).ToArray();
+        leftMesh.normals = mesh.normals.Take(minVerticeIndex).ToArray();
+        leftMesh.uv = mesh.uv.Take(minVerticeIndex).ToArray();
 
         var rightMesh = new Mesh();
-        rightMesh.vertices = _newMesh.vertices.Skip(maxVerticeIndex + 1).ToArray();
-        rightMesh.triangles = _newMesh.triangles.Skip(maxTriangleIndex + 2).Select(t => t - (maxVerticeIndex + 1)).ToArray();
-        rightMesh.normals = _newMesh.normals.Skip(maxVerticeIndex + 1).ToArray();
-        rightMesh.uv = _newMesh.uv.Skip(maxVerticeIndex + 1).ToArray();
+        rightMesh.vertices = mesh.vertices.Skip(maxVerticeIndex).ToArray();
+        rightMesh.triangles = mesh.triangles.Skip(maxVerticeIndex / 2 * 3).Select(t => t - maxVerticeIndex).ToArray();
+        rightMesh.normals = mesh.normals.Skip(maxVerticeIndex).ToArray();
+        rightMesh.uv = mesh.uv.Skip(maxVerticeIndex).ToArray();
 
-        _em.DestroyEntity(_e);
+        _em.DestroyEntity(e);
 
         var leftE = _em.CreateEntity(_archetype);
         var rightE = _em.CreateEntity(_archetype);
