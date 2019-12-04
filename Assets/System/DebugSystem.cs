@@ -7,7 +7,7 @@ public class DebugSystem : ComponentSystem
 {
     protected override void OnUpdate()
     {
-
+/*
         Entities.ForEach((RenderMesh render, ref Translation translation) =>
         {
             var local = (Vector3)translation.Value;
@@ -24,6 +24,6 @@ public class DebugSystem : ComponentSystem
                 Debug.DrawLine(point2, point3, Color.yellow);
                 Debug.DrawLine(point3, point1, Color.yellow);
             }
-        });
+        });*/
     }
 }

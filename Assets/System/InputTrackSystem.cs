@@ -5,7 +5,7 @@ using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
 
-public class InputSystem : ComponentSystem
+public class InputTrackSystem : ComponentSystem
 {
     private float _step;
     private float _trackWidth;
@@ -16,6 +16,7 @@ public class InputSystem : ComponentSystem
     private EntityArchetype _trackArchetype;
     private Entity _currentTrackEntity;
 
+    private bool _eraseMode;
     protected override void OnCreate()
     {
         _step = GameManager.Instanse.step;
@@ -33,11 +34,14 @@ public class InputSystem : ComponentSystem
             typeof(Translation),
             typeof(Rotation),
             typeof(Track));
+
+
     }
 
     protected override void OnUpdate()
     {
-        if (!GameManager.Instanse.eraseMode)
+        _eraseMode = GameManager.Instanse.eraseMode;
+        if (!_eraseMode)
         {
             if (Input.GetMouseButtonDown(0))
             {
@@ -45,6 +49,7 @@ public class InputSystem : ComponentSystem
                 point = new Vector3 { x = point.x, y = point.y, z = 0 };
 
                 _currentTrack = new List<Vector3>();
+
                 _currentTrackEntity = _em.CreateEntity(_trackArchetype);
                 _em.SetComponentData<Translation>(_currentTrackEntity, new Translation { Value = point });
                 _em.SetComponentData<Rotation>(_currentTrackEntity, new Rotation { Value = Quaternion.identity });
@@ -82,6 +87,14 @@ public class InputSystem : ComponentSystem
                     AddPoint(point);
                 }
 
+            }
+
+            if (Input.GetMouseButtonUp(0))
+            {
+                if (_currentTrack.Count == 1)
+                {
+                    _em.DestroyEntity(_currentTrackEntity);
+                }
             }
         }
     }

@@ -486,7 +486,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   eraseMode: 0
-  step: 0.1
+  step: 0.2
+  eraseStep: 0.2
   trackWidth: 0.5
   material: {fileID: 2100000, guid: db999c6f239aabc648a06c0d0e9354f4, type: 2}
 --- !u!4 &534421666

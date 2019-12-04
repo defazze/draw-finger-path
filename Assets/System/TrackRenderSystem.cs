@@ -34,7 +34,7 @@ public class TrackRenderSystem : ComponentSystem
     protected override void OnUpdate()
     {
 
-        Entities.ForEach((Entity e, ref Translation translation, ref TrackPoint trackPoint) =>
+        Entities.WithNone<ErasePoint>().ForEach((Entity e, ref Translation translation, ref TrackPoint trackPoint) =>
         {
             var em = EntityManager;
             var myLocate = translation.Value;
@@ -68,8 +68,6 @@ public class TrackRenderSystem : ComponentSystem
             var tempConnectedDown = -1 * normal - moveVector;
 
             var mainLocate = em.GetComponentData<Translation>(trackEntity).Value;
-
-
 
             if (em.HasComponent<RenderMesh>(trackEntity))
             {
@@ -107,13 +105,6 @@ public class TrackRenderSystem : ComponentSystem
                 track.connectUp = (float3)meshVertices[freeUpIndex] + myLocate;
                 track.connectDown = (float3)meshVertices[freeDownIndex] + myLocate;
                 em.SetComponentData(trackEntity, track);
-
-                /*
-                                var trackQuadEntity = em.CreateEntity();
-                                var trackQuad = new TrackQuad();
-                                trackQuad.Set(mesh.vertices, myLocate);
-                                trackQuad.track = trackEntity;
-                                PostUpdateCommands.AddComponent(trackQuadEntity, trackQuad);*/
             }
 
             PostUpdateCommands.DestroyEntity(e);

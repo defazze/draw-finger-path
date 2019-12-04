@@ -1,44 +1,18 @@
-using System;
-using System.Linq;
-using Unity.Entities;
-using Unity.Rendering;
+using Unity.Burst;
 using UnityEngine;
 
-public class MeshRaycastSystem : ComponentSystem
-{
-    protected override void OnUpdate()
-    {
-        if (GameManager.Instanse.eraseMode)
-        {
-            if (Input.GetMouseButtonDown(0))
-            {
-                var point = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-                point = new Vector3 { x = point.x, y = point.y, z = 0 };
-
-                Entities.WithAll<Track>().ForEach((Entity e, RenderMesh render) =>
-                {
-                    var mesh = render.mesh;
-                    var inside = Poly.ContainsPoint(mesh.vertices, point);
-
-                    if (inside)
-                    {
-                        PostUpdateCommands.DestroyEntity(e);
-                    }
-                });
-            }
-        }
-    }
-}
-
+[BurstCompile]
 public static class Poly
 {
-    public static bool ContainsPoint(Vector3[] vertices, Vector3 p)
+    public static bool ContainsPoint(Vector3[] vertices, Vector3 p, out int[] quadIndexes)
     {
+        quadIndexes = new int[0];
         for (int i = 0; i < vertices.Length; i += 4)
         {
             var quad = new[] { vertices[i], vertices[i + 1], vertices[i + 2], vertices[i + 3] };
             if (IsInPolygon(quad, p))
             {
+                quadIndexes = new[] { i, i + 1, i + 2, i + 3 };
                 return true;
             }
         }
