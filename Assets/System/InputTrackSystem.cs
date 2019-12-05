@@ -83,7 +83,7 @@ public class InputTrackSystem : ComponentSystem
             if (_currentTrack.Count == 2)
             {
                 _contrclockwise = _currentTrack[0].x <= _currentTrack[1].x;
-                _em.SetComponentData(_currentTrackEntity, new Track { contrclockwise = _contrclockwise });
+                _em.SetSharedComponentData(_currentTrackEntity, new Track { contrclockwise = _contrclockwise });
             }
 
             var moveVector = point - previous;
