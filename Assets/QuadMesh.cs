@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
@@ -25,11 +24,10 @@ public static class QuadMesh
 
         var tris = new int[6]
         {
-            // lower left triangle
             0, 2, 1,
-            // upper right triangle
             2, 3, 1
         };
+
         mesh.triangles = tris;
 
         var normals = new Vector3[4]
@@ -53,14 +51,10 @@ public static class QuadMesh
         return mesh;
     }
 
-    public static Mesh Take(this Mesh originalMesh, int startQuad = 0, int? endQuad = null)
+    public static Mesh Take(this Mesh originalMesh, int startQuad = 0, int offset = 1)
     {
         var result = new Mesh();
-        if (endQuad == null)
-        {
-            endQuad = originalMesh.vertices.Length / 4 - 1;
-        }
-        var offset = endQuad.Value - startQuad + 1;
+
         var startVertice = startQuad * 4;
         var verticesCount = offset * 4;
 
@@ -68,7 +62,7 @@ public static class QuadMesh
         result.triangles = originalMesh.triangles.Skip(startVertice / 2 * 3).Take(verticesCount / 2 * 3).Select(t => t - startVertice).ToArray();
         result.normals = originalMesh.normals.Skip(startVertice).Take(offset * 4).ToArray();
         result.uv = originalMesh.uv.Skip(startVertice).Take(verticesCount).ToArray();
-        
+
         return result;
     }
 }

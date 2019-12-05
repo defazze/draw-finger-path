@@ -13,7 +13,6 @@ public class InputTrackSystem : ComponentSystem
     private bool _contrclockwise = true;
     private EntityManager _em;
     private EntityArchetype _pointArchetype;
-    private EntityArchetype _trackArchetype;
     private Entity _currentTrackEntity;
 
     private bool _eraseMode;
@@ -28,11 +27,6 @@ public class InputTrackSystem : ComponentSystem
             typeof(Translation),
             typeof(Rotation),
             typeof(TrackPoint));
-
-        _trackArchetype = _em.CreateArchetype(
-            typeof(Track));
-
-
     }
 
     protected override void OnUpdate()
@@ -46,7 +40,7 @@ public class InputTrackSystem : ComponentSystem
                 point = new Vector3 { x = point.x, y = point.y, z = 0 };
 
                 _currentTrack = new List<Vector3>();
-                _currentTrackEntity = _em.CreateEntity(_trackArchetype);
+                _currentTrackEntity = _em.CreateEntity(typeof(Track));
             }
 
             if (Input.GetMouseButton(0))

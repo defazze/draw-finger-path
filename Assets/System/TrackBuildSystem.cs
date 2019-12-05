@@ -69,8 +69,6 @@ public class TrackBuildSystem : ComponentSystem
                 meshVertices[connectedUpIndex] = normal - moveVector + (Vector3)pointLocate;
                 meshVertices[connectedDownIndex] = -1 * normal - moveVector + (Vector3)pointLocate;
 
-                //em.SetComponentData(trackEntity, new Translation { Value = Vector3.zero });
-
                 mesh = QuadMesh.Create(meshVertices);
 
                 track.connectUp = meshVertices[freeUpIndex];

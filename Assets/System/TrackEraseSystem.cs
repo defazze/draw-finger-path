@@ -1,6 +1,7 @@
+using System.Collections.Generic;
 using System.Linq;
+using Unity.Collections;
 using Unity.Entities;
-using Unity.Rendering;
 using Unity.Transforms;
 using UnityEngine;
 
@@ -63,7 +64,7 @@ public class TrackEraseSystem : ComponentSystem
             leftMesh.uv = mesh.uv.Take(minIndex).ToArray();
 
             var leftE = em.CreateEntity(_archetype);
-            PostUpdateCommands.AddSharedComponent(leftE, new Track { mesh = leftMesh, contrclockwise = track.contrclockwise });
+            em.AddSharedComponentData(leftE, new Track { mesh = leftMesh, contrclockwise = track.contrclockwise });
         }
 
         if (maxIndex < mesh.vertices.Length)
@@ -75,8 +76,13 @@ public class TrackEraseSystem : ComponentSystem
             rightMesh.uv = mesh.uv.Skip(maxIndex).ToArray();
 
             var rightE = em.CreateEntity(_archetype);
-            PostUpdateCommands.AddSharedComponent(rightE, new Track { mesh = rightMesh, contrclockwise = track.contrclockwise });
+            em.AddSharedComponentData(rightE, new Track { mesh = rightMesh, contrclockwise = track.contrclockwise });
         }
-        em.AddComponent<MustBeDestroyed>(entityTrack);
+
+        var query = GetEntityQuery(typeof(ParentTrack));
+        query.SetSharedComponentFilter<ParentTrack>(new ParentTrack { track = entityTrack });
+        em.DestroyEntity(query);
+
+        em.DestroyEntity(entityTrack);
     }
 }
