@@ -30,9 +30,6 @@ public class InputTrackSystem : ComponentSystem
             typeof(TrackPoint));
 
         _trackArchetype = _em.CreateArchetype(
-            typeof(LocalToWorld),
-            typeof(Translation),
-            typeof(Rotation),
             typeof(Track));
 
 
@@ -49,10 +46,7 @@ public class InputTrackSystem : ComponentSystem
                 point = new Vector3 { x = point.x, y = point.y, z = 0 };
 
                 _currentTrack = new List<Vector3>();
-
                 _currentTrackEntity = _em.CreateEntity(_trackArchetype);
-                _em.SetComponentData<Translation>(_currentTrackEntity, new Translation { Value = point });
-                _em.SetComponentData<Rotation>(_currentTrackEntity, new Rotation { Value = Quaternion.identity });
             }
 
             if (Input.GetMouseButton(0))
