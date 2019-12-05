@@ -13,7 +13,6 @@ public class TrackRenderSystem : ComponentSystem
     protected override void OnCreate()
     {
         _material = GameManager.Instanse.material;
-        _trackArchetype = EntityManager.CreateArchetype(typeof(Track));
 
         _renderArchetype = EntityManager.CreateArchetype(typeof(LocalToWorld),
                                                         typeof(Translation),
@@ -39,6 +38,14 @@ public class TrackRenderSystem : ComponentSystem
             var renderEntity = EntityManager.CreateEntity(_renderArchetype);
             EntityManager.AddSharedComponentData<ParentTrack>(renderEntity, new ParentTrack { track = e });
             EntityManager.SetSharedComponentData<RenderMesh>(renderEntity, new RenderMesh { mesh = track.mesh, material = _material });
+
+            if (!EntityManager.HasComponent<LinkedEntityGroup>(e))
+            {
+                EntityManager.AddBuffer<LinkedEntityGroup>(e);
+            }
+
+            var buffer = EntityManager.GetBuffer<LinkedEntityGroup>(e);
+            buffer.Add(renderEntity);
         });
     }
 }

@@ -37,7 +37,7 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
-
+/*
         _em = World.DefaultGameObjectInjectionWorld.EntityManager;
         _archetype = _em.CreateArchetype(
             typeof(LocalToWorld),
@@ -82,7 +82,7 @@ public class GameManager : MonoBehaviour
         _incorrectMesh.CombineMeshes(combines, true, true);
 
         _em.SetSharedComponentData(_incorrectE, new RenderMesh { mesh = _incorrectMesh, material = material });
-
+*/
     }
 
     public void OnEraseToggled(bool val)

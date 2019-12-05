@@ -19,7 +19,8 @@ public struct Track : ISharedComponentData, IEquatable<Track>
             return false;
         }
 
-        return object.ReferenceEquals(mesh, other.mesh);
+        var result = object.ReferenceEquals(mesh, other.mesh);
+        return result;
     }
 
     public override int GetHashCode()
@@ -29,6 +30,7 @@ public struct Track : ISharedComponentData, IEquatable<Track>
             return 0;
         }
 
-        return mesh.GetHashCode();
+        var result = mesh.GetHashCode(); ;
+        return result;
     }
 }

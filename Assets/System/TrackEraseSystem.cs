@@ -4,18 +4,13 @@ using Unity.Rendering;
 using Unity.Transforms;
 using UnityEngine;
 
-public class EraseSystem : ComponentSystem
+public class TrackEraseSystem : ComponentSystem
 {
     private EntityArchetype _archetype;
     private Material _material;
     protected override void OnCreate()
     {
-        _archetype = EntityManager.CreateArchetype(
-    typeof(LocalToWorld),
-    typeof(Translation),
-    typeof(Rotation),
-    typeof(Track),
-    typeof(RenderMesh));
+        _archetype = EntityManager.CreateArchetype(typeof(TrackModified));
 
         _material = GameManager.Instanse.material;
     }
@@ -26,17 +21,19 @@ public class EraseSystem : ComponentSystem
         Entities.WithAll<ErasePoint>().ForEach((Entity e, ref Translation translation) =>
         {
             var position = translation.Value;
-            Entities.WithAll<Track>().ForEach((Entity entityTrack, RenderMesh render) =>
+            Entities.ForEach((Entity entityTrack, Track track) =>
             {
-                var mesh = render.mesh;
+                var mesh = track.mesh;
 
-                var inside = Poly.ContainsPoint(mesh.vertices, position, out var quadIndexes);
-
-                if (inside)
+                if (mesh != null)
                 {
-                    Cut(entityTrack, quadIndexes);
-                }
+                    var inside = Poly.ContainsPoint(mesh.vertices, position, out var quadIndexes);
 
+                    if (inside)
+                    {
+                        Cut(entityTrack, quadIndexes);
+                    }
+                }
             });
         });
 
@@ -50,11 +47,12 @@ public class EraseSystem : ComponentSystem
     private void Cut(Entity entityTrack, int[] quadIndexes)
     {
         var em = EntityManager;
+        var track = em.GetSharedComponentData<Track>(entityTrack);
 
         var minIndex = quadIndexes.Min();
         var maxIndex = quadIndexes.Max() + 1;
 
-        var mesh = em.GetSharedComponentData<RenderMesh>(entityTrack).mesh;
+        var mesh = track.mesh;
 
         if (minIndex > 0)
         {
@@ -65,7 +63,7 @@ public class EraseSystem : ComponentSystem
             leftMesh.uv = mesh.uv.Take(minIndex).ToArray();
 
             var leftE = em.CreateEntity(_archetype);
-            em.SetSharedComponentData(leftE, new RenderMesh { mesh = leftMesh, material = _material });
+            PostUpdateCommands.AddSharedComponent(leftE, new Track { mesh = leftMesh, contrclockwise = track.contrclockwise });
         }
 
         if (maxIndex < mesh.vertices.Length)
@@ -77,12 +75,8 @@ public class EraseSystem : ComponentSystem
             rightMesh.uv = mesh.uv.Skip(maxIndex).ToArray();
 
             var rightE = em.CreateEntity(_archetype);
-            em.SetSharedComponentData(rightE, new RenderMesh { mesh = rightMesh, material = _material });
+            PostUpdateCommands.AddSharedComponent(rightE, new Track { mesh = rightMesh, contrclockwise = track.contrclockwise });
         }
-
-        if (em.Exists(entityTrack))
-        {
-            em.DestroyEntity(entityTrack);
-        }
+        em.AddComponent<MustBeDestroyed>(entityTrack);
     }
 }

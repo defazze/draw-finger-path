@@ -6,7 +6,7 @@ using Unity.Rendering;
 using Unity.Transforms;
 using UnityEngine;
 
-public class TrackBuilderSystem : ComponentSystem
+public class TrackBuildSystem : ComponentSystem
 {
     private Mesh _standartMesh;
     private float _step;
