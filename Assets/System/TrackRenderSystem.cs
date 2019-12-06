@@ -1,19 +1,24 @@
 using Unity.Collections;
 using Unity.Entities;
+using Unity.Mathematics;
 using Unity.Rendering;
 using Unity.Transforms;
 using UnityEngine;
+using Hash128 = Unity.Entities.Hash128;
 
 public class TrackRenderSystem : ComponentSystem
 {
     private EntityArchetype _trackArchetype;
     private EntityArchetype _renderArchetype;
+    private Hash128 _id;
     private Material _material;
     private Material _leftMaterial;
     private Material _rightMaterial;
 
     protected override void OnCreate()
     {
+        _id = new Hash128(new uint4(1, 0, 0, 0));
+
         _material = GameManager.Instanse.material;
         _leftMaterial = GameManager.Instanse.leftEdgeMaterial;
         _rightMaterial = GameManager.Instanse.rightEdgeMaterial;
@@ -60,5 +65,6 @@ public class TrackRenderSystem : ComponentSystem
         var renderEntity = EntityManager.CreateEntity(_renderArchetype);
         EntityManager.AddSharedComponentData<ParentTrack>(renderEntity, new ParentTrack { track = track });
         EntityManager.SetSharedComponentData<RenderMesh>(renderEntity, new RenderMesh { mesh = mesh, subMesh = subMesh, material = material });
+        EntityManager.AddSharedComponentData(renderEntity, new FrozenRenderSceneTag { SceneGUID = _id });
     }
 }
