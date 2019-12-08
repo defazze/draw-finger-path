@@ -7,15 +7,6 @@ using UnityEngine;
 
 public class TrackEraseSystem : ComponentSystem
 {
-    private EntityArchetype _archetype;
-    private Material _material;
-    protected override void OnCreate()
-    {
-        _archetype = EntityManager.CreateArchetype(typeof(TrackModified));
-
-        _material = GameManager.Instanse.material;
-    }
-
     protected override void OnUpdate()
     {
 
@@ -63,7 +54,7 @@ public class TrackEraseSystem : ComponentSystem
             leftMesh.normals = mesh.normals.Take(minIndex).ToArray();
             leftMesh.uv = mesh.uv.Take(minIndex).ToArray();
 
-            var leftE = em.CreateEntity(_archetype);
+            var leftE = em.CreateEntity(typeof(TrackModified));
             em.AddSharedComponentData(leftE, new Track { mesh = leftMesh, contrclockwise = track.contrclockwise });
         }
 
@@ -75,7 +66,7 @@ public class TrackEraseSystem : ComponentSystem
             rightMesh.normals = mesh.normals.Skip(maxIndex).ToArray();
             rightMesh.uv = mesh.uv.Skip(maxIndex).ToArray();
 
-            var rightE = em.CreateEntity(_archetype);
+            var rightE = em.CreateEntity(typeof(TrackModified));
             em.AddSharedComponentData(rightE, new Track { mesh = rightMesh, contrclockwise = track.contrclockwise });
         }
 

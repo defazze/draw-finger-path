@@ -1,34 +1,19 @@
 using System.Collections.Generic;
-using System.Linq;
 using Unity.Entities;
 using Unity.Mathematics;
-using Unity.Rendering;
 using Unity.Transforms;
 using UnityEngine;
 
 public class TrackBuildSystem : ComponentSystem
 {
-    private Mesh _standartMesh;
+
     private float _step;
     private float _trackWidth;
-    private Vector3[] _standartVertices;
-    private RenderMesh _standartRender;
+
     protected override void OnCreate()
     {
         _step = GameManager.Instanse.step;
         _trackWidth = GameManager.Instanse.trackWidth;
-
-        _standartVertices = new Vector3[4]
-       {
-            new Vector3(-_trackWidth/2, -_step/2, 0),
-            new Vector3(_trackWidth/2, -_step/2, 0),
-            new Vector3(-_trackWidth/2, _step/2, 0),
-            new Vector3(_trackWidth/2, _step/2, 0)
-       };
-
-
-        _standartMesh = QuadMesh.Create(_standartVertices);
-        _standartRender = new RenderMesh { mesh = _standartMesh, material = GameManager.Instanse.material };
     }
 
     protected override void OnUpdate()

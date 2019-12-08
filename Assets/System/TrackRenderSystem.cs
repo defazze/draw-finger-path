@@ -65,6 +65,6 @@ public class TrackRenderSystem : ComponentSystem
         var renderEntity = EntityManager.CreateEntity(_renderArchetype);
         EntityManager.AddSharedComponentData<ParentTrack>(renderEntity, new ParentTrack { track = track });
         EntityManager.SetSharedComponentData<RenderMesh>(renderEntity, new RenderMesh { mesh = mesh, subMesh = subMesh, material = material });
-        EntityManager.AddSharedComponentData(renderEntity, new FrozenRenderSceneTag { SceneGUID = _id });
+        //EntityManager.AddSharedComponentData(renderEntity, new FrozenRenderSceneTag { SceneGUID = _id });
     }
 }
