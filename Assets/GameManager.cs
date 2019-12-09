@@ -128,29 +128,26 @@ public class GameManager : MonoBehaviour
 
     public void GestureCallback(GestureRecognizer gesture)
     {
-        var point = Camera.main.ScreenToWorldPoint(new Vector3(gesture.FocusX, gesture.FocusY, 0f));
-        point.z = 0f;
-
-        if (!_points.Contains(point))
-            _points.Add(point);
-
         var matrix = Matrix4x4.TRS(Vector3.zero, Quaternion.identity, Vector3.one);
-        _bounds = GeometryUtility.CalculateBounds(_points.ToArray(), matrix);
+        if (gesture.State == GestureRecognizerState.Executing)
+        {
+            var point = Camera.main.ScreenToWorldPoint(new Vector3(gesture.FocusX, gesture.FocusY, 0f));
+            point.z = 0f;
 
-        /*
-                _bounds = new Bounds(_points[0], Vector3.zero);
+            if (!_points.Contains(point))
+                _points.Add(point);
 
 
+            _bounds = GeometryUtility.CalculateBounds(_points.ToArray(), matrix);
+        }
 
-                for (int i = 1; i < _points.Count; i++)
-                {
-                    _bounds.Encapsulate(new Bounds(_points[i], Vector3.zero));
-                }
-        */
-
-        if (gesture.State == GestureRecognizerState.Ended)
+        if (gesture.State == GestureRecognizerState.Began)
         {
             _points.Clear();
+        }
+        if (gesture.State == GestureRecognizerState.Ended)
+        {
+
         }
         else if (gesture.State != GestureRecognizerState.Began && gesture.State != GestureRecognizerState.Executing)
         {
@@ -164,46 +161,9 @@ public class GameManager : MonoBehaviour
     {
         Gizmos.color = Color.yellow;
 
-        foreach (var point in _points)
-        {
-            UnityEditor.Handles.color = Color.yellow;
-            UnityEditor.Handles.DrawWireDisc(point, Vector3.forward, .2f);
-        }
-        Gizmos.DrawWireCube(_bounds.center, _bounds.extents);
-    }
-
-    private Bounds GetBounds(Vector3[] points)
-    {
-
-        Vector3 xMin = new Vector3(100, 0, 0);
-        Vector3 xMax = new Vector3(-100, 0, 0);
-        Vector3 yMin = new Vector3(0, 100, 0);
-        Vector3 yMax = new Vector3(0, -100, 0);
-
-        foreach (var point in points)
-        {
-            if (point.x < xMin.x)
-            {
-                xMin = point;
-            }
-            if (point.x > xMax.x)
-            {
-                xMax = point;
-            }
-            if (point.y < yMin.y)
-            {
-                yMin = point;
-            }
-            if (point.y > yMax.y)
-            {
-                yMax = point;
-            }
-        }
-        var sizeX = xMax.x - xMin.x;
-        var sizeY = yMax.y - yMin.y;
-
-        //var center=new Vector3(xMin+sizeX/2f,yMin+sizeY/2f,0)
-        var result = new Bounds();
-        return result;
+        Gizmos.DrawLine(_bounds.min, _bounds.min + new Vector3(_bounds.size.x, 0, 0));
+        Gizmos.DrawLine(_bounds.min + new Vector3(_bounds.size.x, 0, 0), _bounds.max);
+        Gizmos.DrawLine(_bounds.max, _bounds.min + new Vector3(0, _bounds.size.y, 0));
+        Gizmos.DrawLine(_bounds.min + new Vector3(0, _bounds.size.y, 0), _bounds.min);
     }
 }
