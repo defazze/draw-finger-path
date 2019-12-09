@@ -54,7 +54,7 @@ public class TrackBuildSystem : ComponentSystem
                 meshVertices[connectedUpIndex] = normal - moveVector + (Vector3)pointLocate;
                 meshVertices[connectedDownIndex] = -1 * normal - moveVector + (Vector3)pointLocate;
 
-                mesh = QuadMesh.Create(meshVertices);
+                mesh = MeshHelper.CreateQuad(meshVertices);
 
                 track.connectUp = meshVertices[freeUpIndex];
                 track.connectDown = meshVertices[freeDownIndex];
@@ -72,7 +72,7 @@ public class TrackBuildSystem : ComponentSystem
                 track.connectUp = meshVertices[freeUpIndex];
                 track.connectDown = meshVertices[freeDownIndex];
 
-                mesh = QuadMesh.Create(meshVertices);
+                mesh = MeshHelper.CreateQuad(meshVertices);
 
                 var combines = new CombineInstance[2];
                 combines[0].mesh = mainMesh;

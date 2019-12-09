@@ -55,7 +55,7 @@ namespace DigitalRubyShared
             ClearLineRenderers();
         }
 
-        private void UpdateLines()
+        public void UpdateLines()
         {
             int idx = Gesture.PathCount - 1;
             if (idx >= 0 && idx < LineRenderers.Length)
@@ -158,10 +158,6 @@ namespace DigitalRubyShared
             {
                 // save off the matched image, the gesture may reset if max path count has been reached
                 matchedImage = Gesture.MatchedGestureImage;
-
-                //gesture.
-                Debug.Log("Focus X: " + gesture.FocusX + ", Focus Y: " + gesture.FocusY);
-                Debug.Log(matchedImage.Name);
             }
             else if (gesture.State != GestureRecognizerState.Began && gesture.State != GestureRecognizerState.Executing)
             {
