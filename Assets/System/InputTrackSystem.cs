@@ -16,6 +16,8 @@ public class InputTrackSystem : ComponentSystem
     private Entity _currentTrackEntity;
 
     private bool _eraseMode;
+    private bool _shapeMode;
+
     protected override void OnCreate()
     {
         _step = GameManager.Instanse.step;
@@ -32,6 +34,13 @@ public class InputTrackSystem : ComponentSystem
     protected override void OnUpdate()
     {
         _eraseMode = GameManager.Instanse.eraseMode;
+        _shapeMode = GameManager.Instanse.shapeMode;
+
+        if (_shapeMode)
+        {
+            return;
+        }
+
         if (!_eraseMode)
         {
             if (Input.GetMouseButtonDown(0))
@@ -50,12 +59,13 @@ public class InputTrackSystem : ComponentSystem
 
             }
 
-            if (Input.GetMouseButtonUp(0))
+        }
+
+        if (Input.GetMouseButtonUp(0))
+        {
+            if (_currentTrack.Count == 1)
             {
-                if (_currentTrack.Count == 1)
-                {
-                    _em.DestroyEntity(_currentTrackEntity);
-                }
+                _em.DestroyEntity(_currentTrackEntity);
             }
         }
     }

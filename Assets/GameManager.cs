@@ -13,7 +13,7 @@ public class GameManager : MonoBehaviour
 {
 
     public bool eraseMode;
-
+    public bool shapeMode;
     public float step = .2f;
     public float eraseStep = .1f;
     public float trackWidth = .2f;
@@ -93,6 +93,11 @@ public class GameManager : MonoBehaviour
     public void OnEraseToggled(bool val)
     {
         eraseMode = val;
+    }
+
+    public void OnShapeToggled(bool val)
+    {
+        shapeMode = val;
     }
 
     public void OnClick()
