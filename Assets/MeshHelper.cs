@@ -1,5 +1,9 @@
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Collections;
+using Unity.Entities;
+using Unity.Mathematics;
+using Unity.Physics;
 using UnityEngine;
 
 public static class MeshHelper
@@ -49,6 +53,16 @@ public static class MeshHelper
         };
         mesh.uv = uv;
 
+        return mesh;
+    }
+    public static Mesh CreateQuad(Bounds bounds)
+    {
+        var vertex0 = Vector3.zero - bounds.extents;
+        var vertex1 = new Vector3(bounds.extents.x, -1 * bounds.extents.y, 0);
+        var vertex2 = new Vector3(-1 * bounds.extents.x, bounds.extents.y, 0);
+        var vertex3 = bounds.extents;
+
+        var mesh = CreateQuad(new[] { vertex0, vertex1, vertex2, vertex3 });
         return mesh;
     }
 
@@ -107,5 +121,23 @@ public static class MeshHelper
         result.uv = originalMesh.uv.Skip(startVertice).Take(verticesCount).ToArray();
 
         return result;
+    }
+
+    public static IEnumerable<int3> GetTriangles(this Mesh mesh)
+    {
+        var triangles = mesh.triangles;
+        for (int i = 0; i < triangles.Length; i += 3)
+        {
+            yield return new int3(triangles[i], triangles[i + 1], triangles[i + 2]);
+        }
+
+    }
+
+    public static BlobAssetReference<Unity.Physics.Collider> CreateCollider(this Mesh mesh)
+    {
+        var vertices = new NativeArray<float3>(mesh.vertices.Select(v => (float3)v).ToArray(), Allocator.Temp);
+        var triangles = new NativeArray<int3>(mesh.GetTriangles().ToArray(), Allocator.Temp);
+
+        return Unity.Physics.MeshCollider.Create(vertices, triangles);
     }
 }

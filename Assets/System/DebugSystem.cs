@@ -1,4 +1,6 @@
 using Unity.Entities;
+using Unity.Mathematics;
+using Unity.Physics;
 using Unity.Rendering;
 using Unity.Transforms;
 using UnityEngine;
@@ -7,23 +9,17 @@ public class DebugSystem : ComponentSystem
 {
     protected override void OnUpdate()
     {
-/*
-        Entities.ForEach((RenderMesh render, ref Translation translation) =>
+
+        Entities.ForEach((ref PhysicsCollider collider, ref Translation translation) =>
         {
-            var local = (Vector3)translation.Value;
-            var mesh = render.mesh;
+            var temp = collider;
+            var aabb = temp.Value.Value.CalculateAabb();
+            var transform = translation.Value;
 
-
-            for (int i = 0; i < mesh.triangles.Length; i += 3)
-            {
-                var point1 = mesh.vertices[mesh.triangles[i]] + local;
-                var point2 = mesh.vertices[mesh.triangles[i + 1]] + local;
-                var point3 = mesh.vertices[mesh.triangles[i + 2]] + local;
-
-                Debug.DrawLine(point1, point2, Color.yellow);
-                Debug.DrawLine(point2, point3, Color.yellow);
-                Debug.DrawLine(point3, point1, Color.yellow);
-            }
-        });*/
+            Debug.DrawLine(aabb.Min + transform, new float3(aabb.Max.x, aabb.Min.y, 0) + transform, Color.yellow);
+            Debug.DrawLine(new float3(aabb.Max.x, aabb.Min.y, 0) + transform, aabb.Max + transform, Color.yellow);
+            Debug.DrawLine(aabb.Max + transform, new float3(aabb.Min.x, aabb.Max.y, 0) + transform, Color.yellow);
+            Debug.DrawLine(new float3(aabb.Min.x, aabb.Max.y, 0) + transform, aabb.Min + transform, Color.yellow);
+        });
     }
 }
