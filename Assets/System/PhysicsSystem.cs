@@ -1,15 +1,30 @@
 
 using Unity.Entities;
 using Unity.Physics;
+using Unity.Transforms;
+using UnityEngine;
 
-public class PhysicsSystem : ComponentSystem
+[UpdateBefore(typeof(TrackRenderSystem))]
+[UpdateAfter(typeof(TrackBuildSystem))]
+public class TrackPhysicsSystem : ComponentSystem
 {
     protected override void OnUpdate()
     {
-        Entities.WithNone<PhysicsCollider>().ForEach((Entity e, Track track) =>
+        Entities.WithAll<TrackModified>().ForEach((Entity e, Track track) =>
         {
-            PostUpdateCommands.AddComponent(e, new PhysicsCollider { Value = track.mesh.CreateCollider() });
+            if (track.mesh != null)
+            {
+                PostUpdateCommands.AddComponent(e, new Translation { Value = Vector3.zero });
+                PostUpdateCommands.AddComponent(e, new Rotation { Value = Quaternion.identity });
+                PostUpdateCommands.AddComponent(e, new LocalToWorld());
 
+                if (EntityManager.HasComponent<PhysicsCollider>(e))
+                {
+                    PostUpdateCommands.RemoveComponent<PhysicsCollider>(e);
+                }
+
+                PostUpdateCommands.AddComponent(e, new PhysicsCollider { Value = track.mesh.CreateCollider() });
+            }
         });
     }
 }

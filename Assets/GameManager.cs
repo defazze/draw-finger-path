@@ -62,32 +62,33 @@ public class GameManager : MonoBehaviour
             typeof(Rotation),
             typeof(RenderMesh));
 
-        var mesh = MeshHelper.CreateQuad();
-        var collider = mesh.CreateCollider();
+        /*
+                var mesh = MeshHelper.CreateQuad();
+                var collider = mesh.CreateCollider();
 
-        var aab = collider.Value.CalculateAabb();
+                var aab = collider.Value.CalculateAabb();
 
-        var fallen = _em.CreateEntity(_archetype);
-        _em.SetComponentData(fallen, new Translation { Value = new float3(0, 4, 0) });
-        _em.SetComponentData(fallen, new Rotation { Value = Quaternion.identity });
-        _em.SetSharedComponentData(fallen, new RenderMesh { mesh = mesh, material = material });
-        _em.AddComponentData(fallen, new PhysicsCollider { Value = collider });
-        _em.AddComponentData(fallen, new PhysicsGravityFactor { Value = .01f });
+                var fallen = _em.CreateEntity(_archetype);
+                _em.SetComponentData(fallen, new Translation { Value = new float3(0, 4, 0) });
+                _em.SetComponentData(fallen, new Rotation { Value = Quaternion.identity });
+                _em.SetSharedComponentData(fallen, new RenderMesh { mesh = mesh, material = material });
+                _em.AddComponentData(fallen, new PhysicsCollider { Value = collider });
+                _em.AddComponentData(fallen, new PhysicsGravityFactor { Value = .01f });
 
-        var massComponent = PhysicsMass.CreateDynamic(collider.Value.MassProperties, .02f);
+                var massComponent = PhysicsMass.CreateDynamic(collider.Value.MassProperties, .02f);
 
-        massComponent.InverseInertia.x = 0;
-        massComponent.InverseInertia.y = 0;
-        massComponent.InverseInertia.z = 0;
+                massComponent.InverseInertia.x = 0;
+                massComponent.InverseInertia.y = 0;
+                massComponent.InverseInertia.z = 0;
 
-        _em.AddComponentData(fallen, massComponent);
-        _em.AddComponent<PhysicsVelocity>(fallen);
+                _em.AddComponentData(fallen, massComponent);
+                _em.AddComponent<PhysicsVelocity>(fallen);
 
-        mesh = MeshHelper.CreateQuad();
-        var e = _em.CreateEntity(_archetype);
-        _em.SetSharedComponentData(e, new RenderMesh { mesh = mesh, material = material });
-        _em.AddComponentData(e, new PhysicsCollider { Value = mesh.CreateCollider() });
-
+                mesh = MeshHelper.CreateQuad();
+                var e = _em.CreateEntity(_archetype);
+                _em.SetSharedComponentData(e, new RenderMesh { mesh = mesh, material = material });
+                _em.AddComponentData(e, new PhysicsCollider { Value = mesh.CreateCollider() });
+        */
 
 
 
@@ -180,13 +181,27 @@ public class GameManager : MonoBehaviour
             {
                 _bounds = GeometryUtility.CalculateBounds(_points.ToArray(), matrix);
                 Mesh mesh = MeshHelper.CreateQuad(_bounds);
+                BoxGeometry boxGeometry = new BoxGeometry();
+                boxGeometry.Center = Vector3.zero;
+                boxGeometry.Orientation = Quaternion.identity;
+                boxGeometry.Size = _bounds.size + new Vector3(0, 0, 0.1f);
+                boxGeometry.BevelRadius = .05f;
+
+                var collider = Unity.Physics.BoxCollider.Create(boxGeometry);
 
                 if (imageGesture.MatchedGestureImage.Name == "Circle")
                 {
-                    mesh = MeshHelper.CreateCircle(Mathf.Max(_bounds.extents.x, _bounds.extents.y));
+                    var radius = Mathf.Max(_bounds.extents.x, _bounds.extents.y);
+                    mesh = MeshHelper.CreateCircle(radius);
+                    CylinderGeometry geometry = new CylinderGeometry();
+                    geometry.Center = Vector3.zero;
+                    geometry.Radius = radius;
+                    geometry.Height = 0.1f;
+                    geometry.Orientation = Quaternion.identity;
+                    geometry.BevelRadius = .05f;
+                    geometry.SideCount = 20;
+                    collider = Unity.Physics.CylinderCollider.Create(geometry);
                 }
-
-                var collider = mesh.CreateCollider();
 
                 var shapeEntity = _em.CreateEntity(_archetype);
                 _em.SetComponentData(shapeEntity, new Translation { Value = _bounds.center });
@@ -197,7 +212,7 @@ public class GameManager : MonoBehaviour
                 var massComponent = PhysicsMass.CreateDynamic(collider.Value.MassProperties, .2f);
                 massComponent.InverseInertia.x = 0;
                 massComponent.InverseInertia.y = 0;
-                massComponent.InverseInertia.z = 0;
+                //massComponent.InverseInertia.z = 0;
 
                 _em.AddComponentData(shapeEntity, massComponent);
                 _em.AddComponent<PhysicsVelocity>(shapeEntity);
