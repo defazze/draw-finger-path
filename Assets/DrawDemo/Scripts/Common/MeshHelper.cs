@@ -55,12 +55,13 @@ public static class MeshHelper
 
         return mesh;
     }
-    public static Mesh CreateQuad(Bounds bounds)
+    public static Mesh CreateQuad(float3 size)
     {
-        var vertex0 = Vector3.zero - bounds.extents;
-        var vertex1 = new Vector3(bounds.extents.x, -1 * bounds.extents.y, 0);
-        var vertex2 = new Vector3(-1 * bounds.extents.x, bounds.extents.y, 0);
-        var vertex3 = bounds.extents;
+        var extents = new Vector3(size.x / 2, size.y / 2, size.z / 2);
+        var vertex0 = Vector3.zero - extents;
+        var vertex1 = new Vector3(extents.x, -1 * extents.y, 0);
+        var vertex2 = new Vector3(-1 * extents.x, extents.y, 0);
+        var vertex3 = extents;
 
         var mesh = CreateQuad(new[] { vertex0, vertex1, vertex2, vertex3 });
         return mesh;
