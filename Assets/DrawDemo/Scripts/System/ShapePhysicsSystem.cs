@@ -53,7 +53,9 @@ public class ShapePhysicsSystem : ComponentSystem
             geometry.SideCount = 20;
 
             var collider = Unity.Physics.CylinderCollider.Create(geometry);
-
+            var collisionFilter = CollisionFilter.Default;
+            collisionFilter.GroupIndex = 2;
+            collider.Value.Filter = collisionFilter;
             return collider;
         }
 
