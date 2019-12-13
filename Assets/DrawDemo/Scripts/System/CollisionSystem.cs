@@ -4,6 +4,7 @@ using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Physics;
 using Unity.Physics.Systems;
+using Unity.Rendering;
 using Unity.Transforms;
 using UnityEngine;
 
@@ -19,33 +20,44 @@ public class CollisionSystem : ComponentSystem
     }
     protected override void OnUpdate()
     {
-        Entities.WithAll<ShapeDetected>().ForEach((ref PhysicsCollider pCollider, ref Translation translation, ref Rotation rotation) =>
+        Entities.WithAll<ShapeDetected>().ForEach((Entity e, ref PhysicsCollider pCollider, ref Translation translation, ref Rotation rotation) =>
         {
 
-            GetCollisions(ref pCollider, translation, rotation);
+            GetCollisions(e, ref pCollider, translation, rotation);
 
         });
     }
 
-    private unsafe void GetCollisions(ref PhysicsCollider pCollider, Translation translation, Rotation rotation)
+    private unsafe void GetCollisions(Entity e, ref PhysicsCollider pCollider, Translation translation, Rotation rotation)
     {
         _physicsWorldSystem = World.GetExistingSystem<BuildPhysicsWorld>();
 
         ColliderDistanceInput distanceInput = new ColliderDistanceInput
         {
             Collider = pCollider.ColliderPtr,
-            MaxDistance = 10f,
+            MaxDistance = .1f,
             Transform = new RigidTransform(rotation.Value, translation.Value),
         };
 
 
         NativeList<DistanceHit> hits = new NativeList<DistanceHit>(Allocator.Temp);
-        AllHitsCollector<DistanceHit> collector = new AllHitsCollector<DistanceHit>(10f, ref hits);
         var collisionWorld = _physicsWorldSystem.PhysicsWorld.CollisionWorld;
-        if (collisionWorld.CalculateDistance(distanceInput, ref collector))
+        if (collisionWorld.CalculateDistance(distanceInput, ref hits))
         {
-            foreach (var hit in collector.AllHits)
+            foreach (var hit in hits)
             {
+                var entity = collisionWorld.Bodies[hit.RigidBodyIndex].Entity;
+                if (entity != e)
+                {
+                    if (EntityManager.HasComponent<RenderMesh>(entity) && EntityManager.HasComponent<ShapeDetected>(entity))
+                    {
+                        var render = EntityManager.GetSharedComponentData<RenderMesh>(entity);
+                        var newMaterial = new UnityEngine.Material(render.material);
+                        newMaterial.color = Color.green;
+                        render.material = newMaterial;
+                        EntityManager.SetSharedComponentData(entity, render);
+                    }
+                }
                 Debug.DrawLine(translation.Value, hit.Position, Color.yellow);
             }
         }

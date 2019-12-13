@@ -620,7 +620,7 @@ MonoBehaviour:
   material: {fileID: 2100000, guid: db999c6f239aabc648a06c0d0e9354f4, type: 2}
   leftEdgeMaterial: {fileID: 2100000, guid: 730cbb670bf3e4317b309ed3d8435a85, type: 2}
   rightEdgeMaterial: {fileID: 2100000, guid: 8c13d984a900d93c4a45710cc822216e, type: 2}
-  shapeMaterial: {fileID: 10302, guid: 0000000000000000f000000000000000, type: 0}
+  shapeMaterial: {fileID: 10303, guid: 0000000000000000f000000000000000, type: 0}
 --- !u!4 &534421666
 Transform:
   m_ObjectHideFlags: 0

@@ -23,12 +23,8 @@ public class TrackPhysicsSystem : ComponentSystem
                     PostUpdateCommands.RemoveComponent<PhysicsCollider>(e);
                 }
 
-                var collisionFilter = CollisionFilter.Default;
-                collisionFilter.GroupIndex = 1;
-
                 var collider = track.mesh.CreateCollider();
-                collider.Value.Filter = collisionFilter;
-                var isValid = collisionFilter.IsValid;
+
                 PostUpdateCommands.AddComponent(e, new PhysicsCollider { Value = collider });
             }
         });

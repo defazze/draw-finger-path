@@ -18,15 +18,28 @@ public class ShapePhysicsSystem : ComponentSystem
             physicsMass.InverseInertia.x = 0;
             physicsMass.InverseInertia.y = 0;
 
-            EntityManager.AddComponentData(e, new PhysicsCollider { Value = collider });
-            EntityManager.AddComponentData(e, physicsMass);
-            EntityManager.AddComponent<PhysicsVelocity>(e);
+            PostUpdateCommands.AddComponent(e, new PhysicsCollider { Value = collider });
+            PostUpdateCommands.AddComponent(e, physicsMass);
+            PostUpdateCommands.AddComponent<PhysicsVelocity>(e);
 
         });
     }
 
     private BlobAssetReference<Collider> GetCollider(ShapeType shapeType, ShapeBounds bounds)
     {
+        var material = new Unity.Physics.Material
+        {
+            CustomTags = Unity.Physics.Material.Default.CustomTags,
+            Flags = Unity.Physics.Material.MaterialFlags.EnableCollisionEvents |
+                    Unity.Physics.Material.MaterialFlags.EnableMassFactors |
+                    Unity.Physics.Material.MaterialFlags.EnableSurfaceVelocity,
+            Friction = Unity.Physics.Material.Default.Friction,
+            FrictionCombinePolicy = Unity.Physics.Material.Default.FrictionCombinePolicy,
+            Restitution = Unity.Physics.Material.Default.Restitution,
+            RestitutionCombinePolicy = Unity.Physics.Material.Default.RestitutionCombinePolicy,
+        };
+
+        var collider = BlobAssetReference<Collider>.Null;
         if (shapeType == ShapeType.Square)
         {
             BoxGeometry boxGeometry = new BoxGeometry();
@@ -35,9 +48,7 @@ public class ShapePhysicsSystem : ComponentSystem
             boxGeometry.Size = bounds.size + new float3(0, 0, 0.1f);
             boxGeometry.BevelRadius = .05f;
 
-            var collider = Unity.Physics.BoxCollider.Create(boxGeometry);
-
-            return collider;
+            collider = Unity.Physics.BoxCollider.Create(boxGeometry, CollisionFilter.Default, material);
         }
 
         if (shapeType == ShapeType.Circle)
@@ -52,13 +63,15 @@ public class ShapePhysicsSystem : ComponentSystem
             geometry.BevelRadius = .05f;
             geometry.SideCount = 20;
 
-            var collider = Unity.Physics.CylinderCollider.Create(geometry);
-            var collisionFilter = CollisionFilter.Default;
-            collisionFilter.GroupIndex = 2;
-            collider.Value.Filter = collisionFilter;
-            return collider;
+            collider = Unity.Physics.CylinderCollider.Create(geometry, CollisionFilter.Default, material);
         }
 
-        throw new NotImplementedException($"Для фигуры {shapeType} не реализован коллайдер.");
+        if (collider == BlobAssetReference<Collider>.Null)
+        {
+            throw new NotImplementedException($"Для фигуры {shapeType} не реализован коллайдер.");
+        }
+
+
+        return collider;
     }
 }
