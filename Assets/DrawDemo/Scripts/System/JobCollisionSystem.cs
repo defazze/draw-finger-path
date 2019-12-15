@@ -6,9 +6,11 @@ using Unity.Physics;
 using Unity.Physics.Systems;
 using UnityEngine;
 
-//[UpdateAfter(typeof(StepPhysicsWorld))]
-//[UpdateAfter(typeof(EndFramePhysicsSystem))]
-[UpdateBefore(typeof(ShapePhysicsSystem))]
+/*
+[UpdateAfter(typeof(StepPhysicsWorld))]
+[UpdateAfter(typeof(EndFramePhysicsSystem))]
+
+//[UpdateBefore(typeof(ShapePhysicsSystem))]
 unsafe public class JobCollisionSystem : JobComponentSystem
 {
 
@@ -19,8 +21,8 @@ unsafe public class JobCollisionSystem : JobComponentSystem
 
         public void Execute(CollisionEvent ev)
         {
-            Entity entityA = ev.Entities.EntityA;
-            Entity entityB = ev.Entities.EntityB;
+            //Entity entityA = ev.Entities.EntityA;
+            //Entity entityB = ev.Entities.EntityB;
             //Entity a = physicsWorld.Bodies[ev.BodyIndices.BodyAIndex].Entity;
             //Entity b = physicsWorld.Bodies[ev.BodyIndices.BodyBIndex].Entity;
             //Debug.Log($"collision event: {ev}. Entities: {entityA}, {entityB}");
@@ -52,9 +54,10 @@ unsafe public class JobCollisionSystem : JobComponentSystem
         };
         JobHandle collisionHandle = collisionJob.Schedule(_stepPhysicsWorld.Simulation, ref physicsWorld, inputDeps);
 
-        return collisionHandle;
+        return  collisionHandle;
 
     }
 
 }
 
+*/

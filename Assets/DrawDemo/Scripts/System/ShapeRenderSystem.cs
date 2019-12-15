@@ -29,6 +29,7 @@ public class ShapeRenderSystem : ComponentSystem
                     break;
             }
 
+
             if (mesh != null)
             {
                 PostUpdateCommands.AddComponent(e, new Translation { Value = bounds.center });
@@ -36,6 +37,15 @@ public class ShapeRenderSystem : ComponentSystem
                 PostUpdateCommands.AddComponent(e, new LocalToWorld());
                 PostUpdateCommands.AddSharedComponent(e, new RenderMesh { mesh = mesh, material = _shapeMaterial });
             }
+        });
+
+        Entities.WithAll<InCollisionTag>().WithNone<InCollisionCompleteTag>().ForEach((Entity e, RenderMesh render) =>
+        {
+            var material = new Material(_shapeMaterial);
+            material.color = Color.green;
+
+            PostUpdateCommands.SetSharedComponent(e, new RenderMesh { mesh = render.mesh, material = material });
+            PostUpdateCommands.AddComponent<InCollisionCompleteTag>(e);
         });
     }
 }

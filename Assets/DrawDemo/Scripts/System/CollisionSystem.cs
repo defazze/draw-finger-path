@@ -49,16 +49,11 @@ public class CollisionSystem : ComponentSystem
                 var entity = collisionWorld.Bodies[hit.RigidBodyIndex].Entity;
                 if (entity != e)
                 {
-                    if (EntityManager.HasComponent<RenderMesh>(entity) && EntityManager.HasComponent<ShapeDetected>(entity))
+                    if (EntityManager.HasComponent<ShapeDetected>(entity))
                     {
-                        var render = EntityManager.GetSharedComponentData<RenderMesh>(entity);
-                        var newMaterial = new UnityEngine.Material(render.material);
-                        newMaterial.color = Color.green;
-                        render.material = newMaterial;
-                        EntityManager.SetSharedComponentData(entity, render);
+                        PostUpdateCommands.AddComponent<InCollisionTag>(entity);
                     }
                 }
-                Debug.DrawLine(translation.Value, hit.Position, Color.yellow);
             }
         }
 
