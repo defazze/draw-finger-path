@@ -1,63 +1,76 @@
-using Unity.Burst;
+
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
+using Unity.Mathematics;
 using Unity.Physics;
 using Unity.Physics.Systems;
-using UnityEngine;
+using Unity.Transforms;
 
-/*
 [UpdateAfter(typeof(StepPhysicsWorld))]
 [UpdateAfter(typeof(EndFramePhysicsSystem))]
-
-//[UpdateBefore(typeof(ShapePhysicsSystem))]
 unsafe public class JobCollisionSystem : JobComponentSystem
 {
+    private BuildPhysicsWorld _physicsWorldSystem;
+    private EndSimulationEntityCommandBufferSystem _commandBufferSystem;
 
-    [BurstCompile]
-    struct MyCollisionJob : ICollisionEventsJob
+    [RequireComponentTag(typeof(ShapeDetected))]
+    struct CollisionJob : IJobForEachWithEntity<PhysicsCollider, Translation, Rotation>
     {
-        //[ReadOnly] public PhysicsWorld physicsWorld;
+        [ReadOnly] public PhysicsWorld physicsWorld;
+        [ReadOnly] public ComponentDataFromEntity<ShapeDetected> shapeIndex;
+        public EntityCommandBuffer.Concurrent commandBuffer;
 
-        public void Execute(CollisionEvent ev)
+        public void Execute(Entity e, int index, ref PhysicsCollider collider, ref Translation translation, ref Rotation rotation)
         {
-            //Entity entityA = ev.Entities.EntityA;
-            //Entity entityB = ev.Entities.EntityB;
-            //Entity a = physicsWorld.Bodies[ev.BodyIndices.BodyAIndex].Entity;
-            //Entity b = physicsWorld.Bodies[ev.BodyIndices.BodyBIndex].Entity;
-            //Debug.Log($"collision event: {ev}. Entities: {entityA}, {entityB}");
+            ColliderDistanceInput distanceInput = new ColliderDistanceInput
+            {
+                Collider = collider.ColliderPtr,
+                MaxDistance = .1f,
+                Transform = new RigidTransform(rotation.Value, translation.Value),
+            };
+
+            NativeList<DistanceHit> hits = new NativeList<DistanceHit>(Allocator.Temp);
+            var collisionWorld = physicsWorld.CollisionWorld;
+            if (collisionWorld.CalculateDistance(distanceInput, ref hits))
+            {
+                foreach (var hit in hits)
+                {
+                    var entity = collisionWorld.Bodies[hit.RigidBodyIndex].Entity;
+                    if (entity != e)
+                    {
+                        if (shapeIndex.HasComponent(entity))
+                        {
+                            commandBuffer.AddComponent<InCollisionTag>(index, entity);
+                        }
+                    }
+                }
+            }
+
+            hits.Dispose();
         }
     }
 
-
-    BuildPhysicsWorld _buildPhysicsWorldSystem;
-    StepPhysicsWorld _stepPhysicsWorld;
-
     protected override void OnCreate()
     {
-        _buildPhysicsWorldSystem = World.GetOrCreateSystem<BuildPhysicsWorld>();
-        _stepPhysicsWorld = World.GetOrCreateSystem<StepPhysicsWorld>();
+        _physicsWorldSystem = World.GetExistingSystem<BuildPhysicsWorld>();
+        _commandBufferSystem = World.GetExistingSystem<EndSimulationEntityCommandBufferSystem>();
     }
-
     protected override JobHandle OnUpdate(JobHandle inputDeps)
     {
-        //Debug.Log($"collision system running: {Time.ElapsedTime}"); // this runs correctly
+        var shapeIndex = GetComponentDataFromEntity<ShapeDetected>();
 
-        inputDeps = JobHandle.CombineDependencies(inputDeps, _buildPhysicsWorldSystem.FinalJobHandle);
-        inputDeps = JobHandle.CombineDependencies(inputDeps, _stepPhysicsWorld.FinalJobHandle);
-
-        var physicsWorld = _buildPhysicsWorldSystem.PhysicsWorld;
-
-        var collisionJob = new MyCollisionJob
+        var collisionJob = new CollisionJob
         {
-            //physicsWorld = physicsWorld
+            physicsWorld = _physicsWorldSystem.PhysicsWorld,
+            commandBuffer = _commandBufferSystem.CreateCommandBuffer().ToConcurrent(),
+            shapeIndex = shapeIndex
         };
-        JobHandle collisionHandle = collisionJob.Schedule(_stepPhysicsWorld.Simulation, ref physicsWorld, inputDeps);
 
-        return  collisionHandle;
+        var jobHandle = collisionJob.Schedule(this, inputDeps);
+        _commandBufferSystem.AddJobHandleForProducer(jobHandle);
 
+        return jobHandle;
     }
-
 }
 
-*/
